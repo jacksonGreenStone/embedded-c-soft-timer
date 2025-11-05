@@ -67,6 +67,36 @@ struct stimer_ctx {
 };
 
 
+// 定义带回调功能的定时器结构体
+typedef struct {
+    struct stimer *timer;           // 原始定时器
+    void (*callback)(void *arg);    // 回调函数指针
+    void *arg;                      // 回调函数参数
+} my_stimer_t;
+
+// 创建带回调功能的定时器
+my_stimer_t* my_stimer_create(struct stimer_ctx *ctx, 
+                              void (*cb)(void *arg), 
+                              void *arg) {
+    my_stimer_t *my_timer = malloc(sizeof(my_stimer_t));
+    if (my_timer) {
+        my_timer->timer = stimer_alloc(ctx);
+        my_timer->callback = cb;
+        my_timer->arg = arg;
+    }
+    return my_timer;
+}
+
+// 检查并执行回调
+void my_stimer_check_and_callback(my_stimer_t *my_timer) {
+    if (stimer_is_expired(my_timer->timer)) {
+        stimer_advance(my_timer->timer);
+        if (my_timer->callback) {
+            my_timer->callback(my_timer->arg);
+        }
+    }
+}
+
 // ---------------------------------------------------------- Private functions
 
 // ------------ Time duration functions
